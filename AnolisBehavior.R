@@ -107,6 +107,7 @@ b<-subset(data1, Focal_Flee==1)
 ## Lizards that responded
 a$outcome<-factor("1")
 b$outcome<-factor("0")
+# This outcome column doesn't work correctly in logistic models because it doesn't like that it's a factor- Oops
 responded<-rbind(a,b)
 responded$Focal_number_headbob_pushups[is.na(responded$Focal_number_headbob_pushups)]<-0
 aggregate(Focal_number_headbob_pushups~outcome, mean, data=responded)
@@ -411,8 +412,20 @@ responded$Focal_Dewlap_extension[is.na(responded$Focal_Dewlap_extension)]<-0
 
 # New Models
   # Logistic Regressions
+
+logit2prob <- function(logit){
+  odds <- exp(logit)
+  prob <- odds / (1 + odds)
+  return(prob)
+}
+
+n.glm.global<-glm(Focal_Bite~Focal_Species_Code+Focal_Sex+Focal_Dewlap_extension+Focal_Headbob_Pushup, data=responded, family=binomial)
+summary(n.glm.global)
+
 n.glm1<-glm(Focal_Bite~Focal_Species_Code, data=responded, family=binomial(link=logit))
 summary(n.glm1) # The higher probability of attack by Ansa makes sense since the stimulus were also Ansa
+n.glm1.int<-logit2prob(coef(n.glm1)[1])
+n.glm1.fac<-logit2prob(coef(n.glm1)[1]+(1*coef(n.glm1)[2]))
 
 n.glm2<-glm(Focal_Bite~Focal_Sex, data=responded, family=binomial(link=logit))
 summary(n.glm2) # Males were most likely to bite- Lots of error & no significance
@@ -420,16 +433,65 @@ summary(n.glm2) # Males were most likely to bite- Lots of error & no significanc
 n.glm3<-glm(Focal_Bite~Focal_Species_Code+Focal_Sex, data=responded, family=binomial(link=logit))
 summary(n.glm3)
 
-n.glm4<-glm(Focal_Bite~Focal_Species_Code*Stimulus_Sex, data=responded, family=binomial(link=logit))
+n.glm4<-glm(Focal_Bite~Focal_Species_Code+Stimulus_Sex, data=responded, family=binomial(link=logit))
 summary(n.glm4)
 
 n.glm5<-glm(Focal_Dewlap_extension~Focal_Species_Code, data=responded, family=binomial(link=logit))
 summary(n.glm5) # It probably doesn't make much sense to include females in this analysis
 
-n.glm6<-glm(Focal_Dewlap_extension~Focal_Species_Code, data=subset(responded, Focal_Sex=="M"), family=binomial(link=logit))
+responded.male<-subset(responded, Focal_Sex=="M")
+responded.male$Focal_Sex<-droplevels(responded.male$Focal_Sex)
+
+n.glm6<-glm(Focal_Dewlap_extension~Focal_Species_Code, data=responded.male, family=binomial(link=logit))
 summary(n.glm6)
 
-  # Consider pooling females and unknowns
+n.glm7<-glm(Focal_Headbob_Pushup~Focal_Species_Code, data=responded, family=binomial)
+summary(n.glm7)
+
+n.glm8<-glm(Focal_Bite~Focal_Dewlap_extension, data=responded, family=binomial)
+summary(n.glm8)
+
+n.glm9<-glm(Focal_Bite~Focal_Dewlap_extension+Focal_Species_Code, data=responded, family=binomial)
+summary(n.glm9)
+
+n.glm10<-glm(Focal_Bite~Focal_Headbob_Pushup, data=responded, family=binomial)
+summary(n.glm10)
+
+n.glm11<-glm(Focal_Bite~Focal_Headbob_Pushup+Focal_Species_Code, data=responded, family=binomial)
+summary(n.glm11)
+n.glm11.Anda<-logit2prob(coef(n.glm11)[1])
+n.glm11.Anda.bob<-logit2prob(coef(n.glm11)[1]+(1*coef(n.glm11)[2]))
+n.glm11.Ansa<-logit2prob(coef(n.glm11)[1]+(1*coef(n.glm11)[3]))
+n.glm11.Ansa.bob<-logit2prob(coef(n.glm11)[1]+(1*coef(n.glm11)[2])+(1*coef(n.glm11)[3]))
+
+n.glm12<-glm(Focal_Bite~Stimulus_SVL, data=responded, family=binomial)
+summary(n.glm12)
+
+n.glm13<-glm(Focal_H)
+
+# Chi-square analyses
+table(responded$Focal_Species_Code, responded$outcome)
+chisq.test(responded$Focal_Species_Code, responded$outcome, correct=F)
+
+table(responded.kn$Focal_Sex, responded.kn$Focal_Bite)
+chisq.test(responded.kn$Focal_Sex, responded.kn$Focal_Bite, correct=F)
+
+table(responded.male$Focal_Species_Code, responded.male$Focal_Dewlap_extension)
+chisq.test(responded.male$Focal_Species_Code, responded.male$Focal_Dewlap_extension, correct=F) # How many actually ended up biting?
+
+table(responded$Focal_Species_Code, responded$Focal_Headbob_Pushup)
+chisq.test(responded$Focal_Species_Code, responded$Focal_Headbob_Pushup, correct=F)
+
+table(responded$Focal_Dewlap_extension, responded$Focal_Bite)
+chisq.test(responded$Focal_Dewlap_extension, responded$Focal_Bite, correct=F)
+
+# Chi square comparing male attack frequency when matched vs. mismatched
+responded.kn.male<-subset(responded.kn, Focal_Sex=="M")
+
+table(responded.kn.male$matched, responded.kn.male$Focal_Bite)
+chisq.test(responded.kn.male$matched, responded.kn.male$Focal_Bite, correct=F)
+
+# Consider pooling females and unknowns
 e<-subset(responded, Focal_Sex=="M")
 e$pooled.sex<-"M"
 f<-subset(responded, Focal_Sex!="M")
@@ -437,13 +499,29 @@ f$pooled.sex<-"PF"
 pooled.res<-rbind(e,f)
 pooled.res$pooled.sex<-factor(pooled.res$pooled.sex)
 
+table(pooled.res$pooled.sex, pooled.res$Focal_Bite)
+chisq.test(pooled.res$pooled.sex, pooled.res$Focal_Bite, correct=F)
+# We pooled the lizards of unknown sex with females because females are often less conspicuous than males,
+# meaning that lizards that were not identifiable to sex from a distance were most likely females. However,
+# it is possible at least some of these unsexed individuals may have been immature males. 
+
 p.glm1<-glm(Focal_Bite~Focal_Species_Code*pooled.sex, data=pooled.res, family=binomial(link=logit))
 summary(p.glm1)
 
-p.glm2<-glm(Focal_Bite~Focal_Species_Code+pooled.sex, data=pooled.res, family=binomial(link=logit))
+p.glm2<-glm(Focal_Bite~pooled.sex, data=pooled.res, family=binomial(link=logit))
 summary(p.glm2)
 
+# I should try calling pooled unknowns matched with stimulus females
 
+# Breakdown of attacked vs. didn't attack
+attacked<-subset(responded, outcome=="1")
+fled<-subset(responded, outcome=="0")
+
+aggregate(Focal_Bite~Focal_Species_Code, sum, data=attacked)
+aggregate(Focal_Bite_Latency~Focal_Species_Code, mean, data=attacked)
+mean(attacked$Focal_Bite_Latency)
+var(attacked$Focal_Bite_Latency)
+summary(glm(Focal_Bite_Latency~Focal_Species_Code, data=attacked, family=quasipoisson(link=log)))
 
 
 

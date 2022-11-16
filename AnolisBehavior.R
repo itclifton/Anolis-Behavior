@@ -467,7 +467,6 @@ n.glm11.Ansa.bob<-logit2prob(coef(n.glm11)[1]+(1*coef(n.glm11)[2])+(1*coef(n.glm
 n.glm12<-glm(Focal_Bite~Stimulus_SVL, data=responded, family=binomial)
 summary(n.glm12)
 
-n.glm13<-glm(Focal_H)
 
 # Chi-square analyses
 table(responded$Focal_Species_Code, responded$outcome)

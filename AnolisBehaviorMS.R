@@ -160,7 +160,7 @@ fig1d<-ggplot(data=data1, aes(x=Focal_Species_Code, y=Focal_Flee_Latency))+
 
 Fig1=plot_grid(fig1a, fig1b, fig1c, fig1d,
                    labels = "", nrow = 1, align="v")
-ggsave("Fig1.jpeg", width=20, height=8, plot=Fig1)
+#ggsave("Fig1.jpeg", width=20, height=8, plot=Fig1)
 
 StimM<-subset(data1, Stimulus_Sex=="M")
 StimF<-subset(data1, Stimulus_Sex=="F")
@@ -366,7 +366,7 @@ Fig2<-plot_grid(StimMale.1, StimFemale.1,
                 Matched.1, Mismatched.1,
                labels = "", ncol = 1, align="v")
 
-ggsave("Fig2.jpeg", width=12, height=18, plot=Fig2)
+ggsave("Fig2.jpeg", width=20, height=16, plot=Fig2)
 
 # Behavioral Dependencies
 # Headbobs & Pushups
@@ -884,7 +884,7 @@ y.grob <- textGrob("Focal Lizard Behavior",
 x.grob <- textGrob("Stimulus Lizard Behavior", 
                    gp=gpar(fontface="bold", fontsize=40))
 Fig3.common<-grid.arrange(arrangeGrob(Fig3, left = y.grob, bottom = x.grob))
-ggsave("Fig3.1.jpeg", width=20, height=16, plot=Fig3.common)
+#ggsave("Fig3.1.jpeg", width=20, height=16, plot=Fig3.common)
 
 
 
